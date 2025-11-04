@@ -57,6 +57,8 @@ class FASTAAlignmentService:
         }
 
         
+    def getABO_ref(self, data_field):
+        return self.abo_reference[data_field]
 
     def _extract_aligned_sequences(self, alignment):
         """Extract aligned sequences with gaps from BioPython alignment object"""

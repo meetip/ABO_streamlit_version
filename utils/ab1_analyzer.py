@@ -226,7 +226,7 @@ class AB1Analyzer:
         out["seq"] = trace_data["seq"]
         return out
 
-    def detect_hetero(self,trace_data, ratio=0.40, half_window=3, min_sum=0.8, min_major=0.5):
+    def detect_hetero(self,trace_data, ratio=0.10, half_window=3, min_sum=0.8, min_major=0.5):
         """
         Heterozygosity on normalized signals.
         - ratio: minor/major >= ratio

@@ -13,7 +13,7 @@ import utils.abo_identifier as abo_utils
 
 import plotly.graph_objects as go
 
-def plot_chromatogram_plotly(trace, base_width=2):
+def plot_chromatogram_plotly_old(trace, base_width=2):
     """
     Create an interactive chromatogram plot with Plotly.
 
@@ -62,6 +62,88 @@ def plot_chromatogram_plotly(trace, base_width=2):
     )
 
     return fig
+ 
+
+def plot_chromatogram_plotly(trace, base_width=2, hetero_sites=None,
+                             cds_start=None, cds_end=None):
+    """
+    Interactive chromatogram plot with exon coordinate support and heterozygous tooltips.
+
+    Parameters
+    ----------
+    trace : dict
+        Must contain "A", "C", "G", "T", "pos", and "seq".
+    base_width : float
+        Horizontal scaling (pixels per base).
+    hetero_sites : list[tuple[int, dict]]
+        List of (base_index, base_intensity_dict) for heterozygous peaks.
+    cds_start, cds_end : int, optional
+        Genomic coordinates for the exon region (for x-axis labels).
+    """
+    seq_len = len(trace["seq"])
+    width_px = max(800, int(seq_len * base_width))
+
+    # Define coordinate offset
+    start_offset = cds_start if cds_start is not None else 0
+    x = [start_offset + i for i in range(seq_len)]
+
+    fig = go.Figure()
+
+    # Base channels
+    fig.add_trace(go.Scatter(x=x, y=trace["A"], mode="lines", name="A", line=dict(color="green", width=1)))
+    fig.add_trace(go.Scatter(x=x, y=trace["C"], mode="lines", name="C", line=dict(color="blue", width=1)))
+    fig.add_trace(go.Scatter(x=x, y=trace["G"], mode="lines", name="G", line=dict(color="black", width=1)))
+    fig.add_trace(go.Scatter(x=x, y=trace["T"], mode="lines", name="T", line=dict(color="red", width=1)))
+
+    # Optional base labels
+    step = max(1, seq_len // 100)
+    labels = [trace["seq"][i] if i % step == 0 else "" for i in range(seq_len)]
+    fig.add_trace(go.Scatter(
+        x=x,
+        y=[0]*seq_len,
+        text=labels,
+        mode="text",
+        textposition="top center",
+        hoverinfo="skip",
+        showlegend=False
+    ))
+
+    # Heterozygous markers with tooltip
+    if hetero_sites:
+        ymax = max(max(trace["A"]), max(trace["C"]), max(trace["G"]), max(trace["T"]))
+        for base_idx, intensities in hetero_sites:
+            pos = start_offset + base_idx
+            bases_sorted = sorted(intensities.items(), key=lambda kv: kv[1], reverse=True)
+            top = bases_sorted[0]
+            second = bases_sorted[1] if len(bases_sorted) > 1 else ("", 0)
+            ratio = f"{second[0]}:{second[1]} / {top[0]}:{top[1]}  (ratio={second[1]/(top[1]+1e-6):.2f})"
+            hover_text = "<br>".join([f"{b}: {v}" for b, v in intensities.items()]) + f"<br>{ratio}"
+            fig.add_trace(go.Scatter(
+                x=[pos, pos],
+                y=[0, ymax],
+                mode="lines",
+                line=dict(color="orange", width=1, dash="dot"),
+                name=f"Hetero {pos}",
+                hovertemplate=f"Pos {pos}<br>{hover_text}<extra></extra>"
+            ))
+
+    exon_label = f"{cds_start}-{cds_end}" if cds_start is not None and cds_end is not None else "?"
+    fig.update_layout(
+        title=f"Chromatogram –  ABO Exon: {trace['exon']} (len={seq_len})",
+        width=width_px,
+        height=400,
+        xaxis_title="Genomic Position" if cds_start else "Base Index",
+        yaxis_title="Signal Intensity",
+        hovermode="x unified",
+        template="plotly_white",
+        legend=dict(orientation="h", y=-0.2),
+        margin=dict(l=40, r=20, t=40, b=40)
+    )
+
+    return fig
+
+
+
 
 def display_alignment_with_snps(aligned_query, aligned_reference, cds_start=None, cds_end=None, variants=None, exon_number=None):
     """
@@ -211,7 +293,7 @@ def display_detailed_alignment_table(aligned_query, aligned_reference, variants=
             df = pd.DataFrame(filtered_data)
             st.write(
                 f"**Showing {len(filtered_data)} positions with differences:**")
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df, width='stretch', height=400)
         else:
             st.success("No differences found - sequences are identical!")
     else:
@@ -226,7 +308,7 @@ def display_detailed_alignment_table(aligned_query, aligned_reference, variants=
         }
         df = pd.DataFrame(all_data)
         st.write(f"**Showing all {len(positions)} positions:**")
-        st.dataframe(df, use_container_width=True, height=400)
+        st.dataframe(df, width='stretch', height=400)
 
 
 
@@ -337,19 +419,24 @@ def process_fasta_file(fasta_file, exon_start=0, exon_end=0):
         best_match = "forward"
 
     selected_strand = strand[best_match]
-
+    aboRef = service.getABO_ref("exons")
+  
     exons_ref = []
     exon_combination = []
     for i in selected_strand['exon_alignments']:
         if i['similarity'] > 0.9:
+            x = i['exon_number']-1
             exon = {}
             exon['exon'] = i['exon_number']
 
             exon['ref_start'] = i['ref_start']
             exon['ref_end'] = i['ref_end']
+            
+            exon['cds_start'] = aboRef[x]['cds_start']
+            exon['cds_end'] = aboRef[x]['cds_end']
             exons_ref.append(exon)
             exon_combination.append(i['exon_number'])
-
+  
     filtered_exons = [exon for exon in selected_strand['exon_alignments']
                       if exon['exon_number'] in [e['exon'] for e in exons_ref]]
     selected_strand['exon_alignments'] = filtered_exons
@@ -477,6 +564,11 @@ threshold_ratio = st.sidebar.slider(
 
 analyze_button = st.sidebar.button("Analyze")
 
+def get_cds(exon_number):
+        for exon in exons_ref:
+            if exon['exon'] == exon_number:
+                return exon['cds_start'], exon['cds_end']
+        return None, None        
 # --- Main Panel ---
 st.title("Genetic Analysis Dashboard")
 st.set_page_config(layout="wide")
@@ -503,19 +595,28 @@ if analyze_button:
             processed_FASTA) if processed_FASTA else []
         
         tested_exons = [exon['exon'] for exon in exons_ref]
+         
           
-           
+            
+      
 
-        
+ 
 
         with tab1:
             st.subheader("Chromatogram Check for Heterozygotes")
             st.write("### Heterozygote Positions Detected: ", len(hets) if hets else 0)
             st.write("👉 Display chromatogram analysis results here")
+            hetero_sites = [
+                (31, {"A":0, "C":0, "G":9, "T":55}),
+                (78, {"A":200, "C":180, "G":10, "T":0})
+            ]
             if processed_AB1:
-                for i in processed_AB1: # type: ignore
-                    fig = plot_chromatogram_plotly(i, base_width=2)
-                    st.plotly_chart(fig)
+                for i in processed_AB1: # type: ignore 
+                    x = i['exon']
+                    cds_start, cds_end = get_cds(x)
+
+                    fig = plot_chromatogram_plotly(i, base_width=2,  cds_start=cds_start, cds_end=cds_end, hetero_sites=hetero_sites)
+                    st.plotly_chart(fig, width='stretch')
 
             if hets:
                 st.write("### Detected Heterozygous Positions:")
