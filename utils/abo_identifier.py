@@ -1,10 +1,10 @@
+
 import networkx as nx
 import json
 from pathlib import Path
 import utils.referece_loader as rl
 ABO_IDENTIFIER_GRAPH_PATH = './data/ABO_enhanced_subgraph.gml'
 ABO='./data/abo_reference_ng006669.json'
-
 
 
 
@@ -20,7 +20,7 @@ class ABOIdentifier:
  
 
 
-    def get_variant_node(self, position: int, from_base: str, to_base: str):
+    def get_variant_node(self, position: int, from_base: str, to_base: str,iupac_code: str) -> tuple:
         """Retrieve a variant node from the graph based on its attributes."""
         if not self.graph:
             print("❌ Graph not loaded, cannot retrieve node.")
@@ -31,7 +31,7 @@ class ABOIdentifier:
                 data.get('position') == position and
                 data.get('from_base') == from_base and
                 data.get('to_base') == to_base):
-                return (node, data)
+                return (node, data, iupac_code)
         return None
 
     def get_variants_for_allele(self, allele_name: str) -> list:

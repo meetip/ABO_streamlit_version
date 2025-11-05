@@ -13,6 +13,24 @@ import utils.abo_identifier as abo_utils
 
 import plotly.graph_objects as go
 
+IUPAC_CODES = {
+    'A':	'A',
+    'C':	'C',
+    'G':	'G',
+    'T':	'T',
+    'R':	'A or G',
+    'Y':	'C or T',
+    'S':	'G or C',
+    'W':	'A or T',
+    'K':	'G or T',
+    'M':	'A or C',
+    'B':	'C or G or T',
+    'D':	'A or G or T',
+    'H':	'A or C or T',
+    'V':	'A or C or G',
+    'N':	'A or C or G or T'}
+
+
 def plot_chromatogram_plotly_old(trace, base_width=2):
     """
     Create an interactive chromatogram plot with Plotly.
@@ -31,10 +49,14 @@ def plot_chromatogram_plotly_old(trace, base_width=2):
     x = list(range(seq_len))
 
     # Plot each base channel
-    fig.add_trace(go.Scatter(y=trace["A"], x=x, mode="lines", name="A", line=dict(color="green", width=1)))
-    fig.add_trace(go.Scatter(y=trace["C"], x=x, mode="lines", name="C", line=dict(color="blue", width=1)))
-    fig.add_trace(go.Scatter(y=trace["G"], x=x, mode="lines", name="G", line=dict(color="black", width=1)))
-    fig.add_trace(go.Scatter(y=trace["T"], x=x, mode="lines", name="T", line=dict(color="red", width=1)))
+    fig.add_trace(go.Scatter(
+        y=trace["A"], x=x, mode="lines", name="A", line=dict(color="green", width=1)))
+    fig.add_trace(go.Scatter(
+        y=trace["C"], x=x, mode="lines", name="C", line=dict(color="blue", width=1)))
+    fig.add_trace(go.Scatter(
+        y=trace["G"], x=x, mode="lines", name="G", line=dict(color="black", width=1)))
+    fig.add_trace(go.Scatter(
+        y=trace["T"], x=x, mode="lines", name="T", line=dict(color="red", width=1)))
 
     # Optional: base labels (every Nth base)
     step = max(1, seq_len // 100)
@@ -62,7 +84,7 @@ def plot_chromatogram_plotly_old(trace, base_width=2):
     )
 
     return fig
- 
+
 
 def plot_chromatogram_plotly(trace, base_width=2, hetero_sites=None,
                              cds_start=None, cds_end=None):
@@ -90,10 +112,14 @@ def plot_chromatogram_plotly(trace, base_width=2, hetero_sites=None,
     fig = go.Figure()
 
     # Base channels
-    fig.add_trace(go.Scatter(x=x, y=trace["A"], mode="lines", name="A", line=dict(color="green", width=1)))
-    fig.add_trace(go.Scatter(x=x, y=trace["C"], mode="lines", name="C", line=dict(color="blue", width=1)))
-    fig.add_trace(go.Scatter(x=x, y=trace["G"], mode="lines", name="G", line=dict(color="black", width=1)))
-    fig.add_trace(go.Scatter(x=x, y=trace["T"], mode="lines", name="T", line=dict(color="red", width=1)))
+    fig.add_trace(go.Scatter(
+        x=x, y=trace["A"], mode="lines", name="A", line=dict(color="green", width=1)))
+    fig.add_trace(go.Scatter(
+        x=x, y=trace["C"], mode="lines", name="C", line=dict(color="blue", width=1)))
+    fig.add_trace(go.Scatter(
+        x=x, y=trace["G"], mode="lines", name="G", line=dict(color="black", width=1)))
+    fig.add_trace(go.Scatter(
+        x=x, y=trace["T"], mode="lines", name="T", line=dict(color="red", width=1)))
 
     # Optional base labels
     step = max(1, seq_len // 100)
@@ -110,14 +136,17 @@ def plot_chromatogram_plotly(trace, base_width=2, hetero_sites=None,
 
     # Heterozygous markers with tooltip
     if hetero_sites:
-        ymax = max(max(trace["A"]), max(trace["C"]), max(trace["G"]), max(trace["T"]))
+        ymax = max(max(trace["A"]), max(trace["C"]),
+                   max(trace["G"]), max(trace["T"]))
         for base_idx, intensities in hetero_sites:
             pos = start_offset + base_idx
-            bases_sorted = sorted(intensities.items(), key=lambda kv: kv[1], reverse=True)
+            bases_sorted = sorted(intensities.items(),
+                                  key=lambda kv: kv[1], reverse=True)
             top = bases_sorted[0]
             second = bases_sorted[1] if len(bases_sorted) > 1 else ("", 0)
             ratio = f"{second[0]}:{second[1]} / {top[0]}:{top[1]}  (ratio={second[1]/(top[1]+1e-6):.2f})"
-            hover_text = "<br>".join([f"{b}: {v}" for b, v in intensities.items()]) + f"<br>{ratio}"
+            hover_text = "<br>".join(
+                [f"{b}: {v}" for b, v in intensities.items()]) + f"<br>{ratio}"
             fig.add_trace(go.Scatter(
                 x=[pos, pos],
                 y=[0, ymax],
@@ -141,8 +170,6 @@ def plot_chromatogram_plotly(trace, base_width=2, hetero_sites=None,
     )
 
     return fig
-
-
 
 
 def display_alignment_with_snps(aligned_query, aligned_reference, cds_start=None, cds_end=None, variants=None, exon_number=None):
@@ -216,7 +243,7 @@ def display_alignment_with_snps(aligned_query, aligned_reference, cds_start=None
         st.metric("Insertions", insertions)
     with col4:
         st.metric("Deletions", deletions)
- 
+
 
 def display_detailed_alignment_table(aligned_query, aligned_reference, variants=None, cds_start=None, cds_end=None):
     """
@@ -311,20 +338,19 @@ def display_detailed_alignment_table(aligned_query, aligned_reference, variants=
         st.dataframe(df, width='stretch', height=400)
 
 
-
 def process_ab1_files(fwd_ab1_files, exons_ref, threshold_ratio=0.3):
 
     mapping_service = fasta_utils.FASTAAlignmentService()
-    traces = None 
-    if len(fwd_ab1_files) >1:
-        for i in fwd_ab1_files: 
+    traces = None
+    if len(fwd_ab1_files) > 1:
+        for i in fwd_ab1_files:
             ab1_service = ab1_utils.AB1Analyzer()
             trace = ab1_service.read_ab1_trace(i)
-            trace = ab1_service.merge_overlap(traces, trace) if traces else trace
+            trace = ab1_service.merge_overlap(
+                traces, trace) if traces else trace
             traces = trace
 
-             
-    else: 
+    else:
         ab1_service = ab1_utils.AB1Analyzer()
         traces = ab1_service.read_ab1_trace(fwd_ab1_files[0])
 
@@ -336,8 +362,8 @@ def process_ab1_files(fwd_ab1_files, exons_ref, threshold_ratio=0.3):
         results = ab1_service.extract_exon_traces(merged_reverse, exons_ref)
         return results, hets
 
-
     return None, None
+
 
 def process_fasta_file(fasta_file, exon_start=0, exon_end=0):
     # Convert Streamlit uploaded file to text mode for BioPython
@@ -378,6 +404,8 @@ def process_fasta_file(fasta_file, exon_start=0, exon_end=0):
               "reverse": rev_fasta_analysis, "none": "none"}
     fwd_similarities = {}
     rev_similarities = {}
+    if 'error' in fwd_fasta_analysis or 'error' in rev_fasta_analysis:
+        return {}, []
     for i in fwd_fasta_analysis['exon_alignments']:
         fwd_similarities[i['exon_number']] = i['similarity']
 
@@ -420,7 +448,7 @@ def process_fasta_file(fasta_file, exon_start=0, exon_end=0):
 
     selected_strand = strand[best_match]
     aboRef = service.getABO_ref("exons")
-  
+
     exons_ref = []
     exon_combination = []
     for i in selected_strand['exon_alignments']:
@@ -431,12 +459,12 @@ def process_fasta_file(fasta_file, exon_start=0, exon_end=0):
 
             exon['ref_start'] = i['ref_start']
             exon['ref_end'] = i['ref_end']
-            
+
             exon['cds_start'] = aboRef[x]['cds_start']
             exon['cds_end'] = aboRef[x]['cds_end']
             exons_ref.append(exon)
             exon_combination.append(i['exon_number'])
-  
+
     filtered_exons = [exon for exon in selected_strand['exon_alignments']
                       if exon['exon_number'] in [e['exon'] for e in exons_ref]]
     selected_strand['exon_alignments'] = filtered_exons
@@ -464,29 +492,79 @@ def process_fasta_file(fasta_file, exon_start=0, exon_end=0):
 
     return selected_strand, exons_ref
 
+
+def handle_IUPAC_codes(abo_identifier, i, types):
+    types_list = {'snp': 'alt_base', 'insertion': 'inserted_sequence',
+                  'deletion': 'deleted_sequence'}
+    het_variants = []
+    var_nodes = []
+    unknown = []
+    variant_base = i[types_list[types]]
+    possible_bases = IUPAC_CODES.get(variant_base, "").split(" or ")
+    print(i['isbt_pos'], possible_bases)
+    for base in possible_bases:
+
+        var_node = None
+        if i['type'] == 'deletion':
+            var_node = abo_identifier.get_variant_node(
+                i['isbt_pos'], base, "", variant_base)
+        elif i['type'] == 'insertion':
+            var_node = abo_identifier.get_variant_node(
+                i['isbt_pos'], "", base, variant_base)
+        else:
+            var_node = abo_identifier.get_variant_node(
+                i['isbt_pos'], i['ref_base'], base, variant_base)
+
+        if var_node is not None:
+            print(var_node)
+            var_nodes.append(var_node)
+            het_variants.append(i['alt_base'])
+        else:
+            if base != i['ref_base']:
+
+                unknown.append(i)
+    return var_nodes, het_variants, unknown
+
+
+def get_display_base(base):
+    """Convert IUPAC code to display string."""
+    if base in IUPAC_CODES:
+        base_display = IUPAC_CODES[base]
+        if base == base_display:
+            return base
+        else:
+            return f"{base} ({base_display})"
+    return base
+
+
 def identify_abo_alleles(FASTA_variant_list):
     abo_identifier = abo_utils.ABOIdentifier("ABO")
     var_nodes = []
+    het_variants = []
     unknown = []
     for exon in FASTA_variant_list['exon_alignments']:
         variants = exon['variants']
         for i in variants:
-            if i['type']=='insertion':
-                var_node = abo_identifier.get_variant_node(i['isbt_pos'],"",i['inserted_sequence'])    
-            elif i['type']=='deletion':
-                var_node = abo_identifier.get_variant_node(i['isbt_pos'],i['deleted_sequence'],"")
+            if i['type'] == 'insertion':
+                var_node, het_var, unk = handle_IUPAC_codes(
+                    abo_identifier, i, 'insertion')
+            elif i['type'] == 'deletion':
+                var_node, het_var, unk = handle_IUPAC_codes(
+                    abo_identifier, i, 'deletion')
             else:
-                var_node = abo_identifier.get_variant_node(i['isbt_pos'],i['ref_base'],i['alt_base'])
-            if var_node is not None:
-                var_nodes.append(var_node)
-            else:
-                unknown.append(i)
+                var_node, het_var, unk = handle_IUPAC_codes(
+                    abo_identifier, i, 'snp')
+            var_nodes.extend(var_node)
+            het_variants.extend(het_var)
+            unknown.extend(unk)
     alleles = []
-    for node_name, node_data in var_nodes:
+    node_iupac_map = {node[0]: node[2] for node in var_nodes}
+    for node_name, node_data, iupac_code in var_nodes:
         # The identify_alleles method expects a list of tuples (node_name, node_data)
         # So we pass the current node as a list containing one tuple
         allele = abo_identifier.identify_alleles([(node_name, node_data)])
-        alleles.append({node_name:allele}) # Use extend to add elements from the list
+        # Use extend to add elements from the list
+        alleles.append({node_name: allele})
 
     # Extract the lists of alleles from the 'alleles' list of dictionaries
     allele_lists = [list(d.values())[0] for d in alleles]
@@ -503,21 +581,20 @@ def identify_abo_alleles(FASTA_variant_list):
     allele_variants_list = []
     for i in common_alleles:
         v = abo_identifier.get_variants_for_allele(i)
-        av_list=[]
+        av_list = []
         for j in v:
             gene, location, change = j[0].split("_")
             exon = abo_identifier.get_exon(location)
-            av_list.append({"name":j[0],"exon":exon,"location":int(location),"change":change}) # Convert location to int for sorting
-        
+            av_list.append({"name": j[0], "exon": exon, "location": int(
+                location), "change": change})  # Convert location to int for sorting
+
         av_list.sort(key=lambda x: x['location'])
 
+        allele_variants_list.append({i: av_list})
+    allele_variants_list.sort(key=lambda x: list(x.keys())[
+                              0])  # Sort by allele name
 
-        allele_variants_list.append({i:av_list})
-    allele_variants_list.sort(key=lambda x: list(x.keys())[0])  # Sort by allele name
-
-    
-    variants_name = [x[0] for x in var_nodes ]
-
+    variants_name = [x[0] for x in var_nodes]
 
     unknown_alleles_to_display = []
     for u in unknown:
@@ -526,23 +603,32 @@ def identify_abo_alleles(FASTA_variant_list):
         item['isbt_pos'] = u.get('isbt_pos')
         if exon is None:
             item['exon'] = 'N/A'
-        item['type']= u.get('type')
+        item['type'] = u.get('type')
         if u.get('type') == 'deletion':
-            item['ref_base'] = u.get('deleted_sequence', 'N/A'),
+            item['ref_base'] = get_display_base(
+                u.get('deleted_sequence', 'N/A')),
             item['alt_base'] = '-',
         elif u.get('type') == 'insertion':
             item['ref_base'] = '-',
-            item['alt_base'] = u.get('inserted_sequence', 'N/A'),
-       
-        else:     
-            item['ref_base'] = u.get('ref_base', 'N/A'),
-            item['alt_base'] = u.get('alt_base', 'N/A'),
-        
+            item['alt_base'] = get_display_base(
+                u.get('inserted_sequence', 'N/A')),
+
+        else:
+            item['ref_base'] = get_display_base(u.get('ref_base', 'N/A')),
+            item['alt_base'] = get_display_base(u.get('alt_base', 'N/A')),
+
         unknown_alleles_to_display.append(item)
-    return allele_variants_list, unknown_alleles_to_display, variants_name
+    return allele_variants_list, unknown_alleles_to_display, variants_name, node_iupac_map
 
 
-
+def get_display_iupac_change(change, iupac_code):
+    change_list = change.split(">")
+    if len(change_list) > 1:
+        ref_base = change_list[0]
+        return f"{ref_base}>{iupac_code}"
+    else:
+        change = change[:-2] + f"({iupac_code})"
+        return change
 
 
 st.title("🧬 ABO blood group analysis")
@@ -552,8 +638,8 @@ st.title("🧬 ABO blood group analysis")
 fwd_ab1 = st.sidebar.file_uploader("Upload  AB1 file", type=[
     "ab1"], accept_multiple_files=True, help="You can upload multiple files for batch processing.")
 
-ref_file = st.sidebar.file_uploader(
-    "Upload exon-specific FASTA", type=["fasta", "fa"])
+fasta_files = st.sidebar.file_uploader(
+    "Upload exon-specific FASTA", type=["fasta", "fa", "fas"], accept_multiple_files=True)
 exon_start = st.sidebar.number_input(
     "Exon start (optional)", min_value=0, value=0)
 exon_end = st.sidebar.number_input(
@@ -564,58 +650,73 @@ threshold_ratio = st.sidebar.slider(
 
 analyze_button = st.sidebar.button("Analyze")
 
+
 def get_cds(exon_number):
-        for exon in exons_ref:
-            if exon['exon'] == exon_number:
-                return exon['cds_start'], exon['cds_end']
-        return None, None        
+    for exon in exons_ref:
+        if exon['exon'] == exon_number:
+            return exon['cds_start'], exon['cds_end']
+    return None, None
+
+
 # --- Main Panel ---
 st.title("Genetic Analysis Dashboard")
 st.set_page_config(layout="wide")
 
 if analyze_button:
-    if not fwd_ab1 and not ref_file:
+    if not fwd_ab1 and not fasta_files:
         st.warning("Please upload at least one file before analyzing.")
     else:
         st.success("Files uploaded successfully! Starting analysis...")
- 
+
         # Tabs for displaying results
         tab1, tab2, tab3 = st.tabs([
             "Chromatogram Check for Heterozygotes",
             "Exon-based SNP",
             "Allele Prediction"
         ])
+        if fasta_files:
+            exons_ref = []
+            processed_FASTA = {}
+            for ref_file in fasta_files:
+                fasta_detected, exons_ref = process_fasta_file(
+                    ref_file, exon_start, exon_end)
 
-        processed_FASTA, exons_ref = process_fasta_file(
-            ref_file, exon_start, exon_end)
+                if fasta_detected:
+                    if processed_FASTA == {}:
+                        processed_FASTA = fasta_detected
+                    else:
+                        for i in fasta_detected['exon_combination']:
+                            if i not in processed_FASTA['exon_combination']:
+                                processed_FASTA['exon_combination'].append(i)
+                                processed_FASTA['query_length'] += fasta_detected['query_length']
+                                processed_FASTA['exon_alignments'].extend(
+                                    # type: ignore
+                                    fasta_detected['exon_alignments'])
 
-        processed_AB1,hets = process_ab1_files(fwd_ab1, exons_ref, threshold_ratio)
+        processed_AB1, hets = process_ab1_files(
+            fwd_ab1, exons_ref, threshold_ratio) if fwd_ab1 else (None, None)
 
-        possible_alleles, unknown_alleles_to_display,variants_name = identify_abo_alleles(
+        possible_alleles, unknown_alleles_to_display, variants_name, node_iupac_map = identify_abo_alleles(
             processed_FASTA) if processed_FASTA else []
-        
-        tested_exons = [exon['exon'] for exon in exons_ref]
-         
-          
-            
-      
 
- 
+        tested_exons = [exon['exon'] for exon in exons_ref]
 
         with tab1:
             st.subheader("Chromatogram Check for Heterozygotes")
-            st.write("### Heterozygote Positions Detected: ", len(hets) if hets else 0)
+            st.write("### Heterozygote Positions Detected: ",
+                     len(hets) if hets else 0)
             st.write("👉 Display chromatogram analysis results here")
             hetero_sites = [
-                (31, {"A":0, "C":0, "G":9, "T":55}),
-                (78, {"A":200, "C":180, "G":10, "T":0})
+                (31, {"A": 0, "C": 0, "G": 9, "T": 55}),
+                (78, {"A": 200, "C": 180, "G": 10, "T": 0})
             ]
             if processed_AB1:
-                for i in processed_AB1: # type: ignore 
+                for i in processed_AB1:  # type: ignore
                     x = i['exon']
                     cds_start, cds_end = get_cds(x)
 
-                    fig = plot_chromatogram_plotly(i, base_width=2,  cds_start=cds_start, cds_end=cds_end, hetero_sites=hetero_sites)
+                    fig = plot_chromatogram_plotly(
+                        i, base_width=2,  cds_start=cds_start, cds_end=cds_end, hetero_sites=hetero_sites)
                     st.plotly_chart(fig, width='stretch')
 
             if hets:
@@ -633,6 +734,8 @@ if analyze_button:
             st.subheader("Exon-based SNP")
 
             st.write("👉 Display exon SNP comparison or table results here")
+            st.markdown(
+                "**Reference Gene:** [NG_006669.1](https://www.ncbi.nlm.nih.gov/nuccore/NG_006669.1)")
             st.write("### Exon Alignments Summary")
             st.write("Total Length of Sequence Analyzed: ",
                      processed_FASTA['query_length'])
@@ -646,7 +749,6 @@ if analyze_button:
                 ref_base = []
                 alt_base = []
 
-           
                 # Display alignment visualization if available
                 if 'aligned_query' in exon and 'aligned_reference' in exon:
                     st.write("---")
@@ -667,14 +769,18 @@ if analyze_button:
                     isbt_pos.append(var.get('isbt_pos', 'N/A'))
                     type.append(var.get('type', 'N/A'))
                     if var.get('type') == 'deletion':
-                        ref_base.append(var.get('deleted_sequence'))
+                        ref_base.append(get_display_base(
+                            var.get('deleted_sequence')))
                         alt_base.append('-')
                     elif var.get('type') == 'insertion':
                         ref_base.append('-')
-                        alt_base.append(var.get('inserted_sequence'))
+                        alt_base.append(get_display_base(
+                            var.get('inserted_sequence')))
                     else:
-                        ref_base.append(var.get('ref_base', var.get('ref', 'N/A')))
-                        alt_base.append(var.get('alt_base', var.get('alt', 'N/A')))
+                        ref_base.append(get_display_base(
+                            var.get('ref_base', var.get('ref', 'N/A'))))
+                        alt_base.append(get_display_base(
+                            var.get('alt_base', var.get('alt', 'N/A'))))
 
                 if exon['variants']:
                     st.write("**Variant Summary Table:**")
@@ -692,20 +798,51 @@ if analyze_button:
         with tab3:
             st.subheader("Allele Prediction")
             st.write("👉 Display predicted alleles or summary results here")
+            st.markdown(
+                "**Reference:** [ISBT ABO Alleles Table](https://www.isbtweb.org/resource/001aboalleles.html)")
+
+            # Color code legend
+            st.markdown("""
+            #### 🎨 Color Code Legend:
+            """)
+
+            legend_html = """
+            <table style="border-collapse: collapse; margin-bottom: 20px;">
+                <tr>
+                    <td style="background-color: #FEC98F; padding: 8px 12px; border: 2px solid #999; font-weight: bold;">Heterozygous Variant</td>
+                    <td style="padding: 8px 12px; border: 2px solid #999;">Variant detected with IUPAC ambiguity code (heterozygous)</td>
+                </tr>
+                <tr>
+                    <td style="background-color: #E0FFCC; padding: 8px 12px; border: 2px solid #999; font-weight: bold;">Found in Tested Exon</td>
+                    <td style="padding: 8px 12px; border: 2px solid #999;">Variant confirmed in the tested exon</td>
+                </tr>
+                <tr>
+                    <td style="background-color: #FFD6C9; padding: 8px 12px; border: 2px solid #999; font-weight: bold;">Not Found in Tested Exon</td>
+                    <td style="padding: 8px 12px; border: 2px solid #999;">Variant expected but not detected in the tested exon</td>
+                </tr>
+                <tr>
+                    <td style="background-color: #EFECE6; padding: 8px 12px; border: 2px solid #999; font-weight: bold;">Not in Tested Exon</td>
+                    <td style="padding: 8px 12px; border: 2px solid #999;">Variant in exon that was not included in the test</td>
+                </tr>
+            </table>
+            """
+            st.markdown(legend_html, unsafe_allow_html=True)
+
             st.write("### Predicted ABO Alleles:")
+
             if possible_alleles:
-                #allele_variants_df = pd.DataFrame(possible_alleles)
-                #st.table(allele_variants_df)
+                # allele_variants_df = pd.DataFrame(possible_alleles)
+                # st.table(allele_variants_df)
                 st.markdown(
                     """
                     <style>
                     table {
                         border-collapse: collapse;
-                        width: 80%;
-                        border: 1px solid #999;
+                        width: 100%;
+                        border: 3px solid #999;
                     }
                     th, td {
-                        border: 1px solid #ccc;
+                        border: 3px solid #ccc;
                         padding: 8px 12px;
                         text-align: center;
                         vertical-align: middle;
@@ -725,21 +862,22 @@ if analyze_button:
                             if i > 0:
                                 html_string += "<tr>"
                             if variant['exon'] in tested_exons:
-                                if variant['name'] in variants_name and variant['exon'] in tested_exons: 
-                                    html_string += f"<td style='background-color: #E0FFCC;'>{variant['name']}</td><td>{variant['exon']}</td><td>{variant['location']}</td><td>{variant['change']}</td></tr>"
+                                if variant['name'] in variants_name and variant['exon'] in tested_exons:
+                                    if variant['name'] in node_iupac_map:
+                                        iupac_code = node_iupac_map[variant['name']]
+                                        html_string += f"<td style='background-color: #FEC98F;'>{variant['name']} ({iupac_code})</td><td style='background-color: #FEC98F;'>{variant['exon']}</td><td style='background-color: #FEC98F;'>{variant['location']}</td><td style='background-color: #FEC98F;'>{get_display_iupac_change(variant['change'], iupac_code)}</td></tr>"
+                                    else:
+                                        html_string += f"<td style='background-color: #E0FFCC;'>{variant['name']}</td><td style='background-color: #E0FFCC;'>{variant['exon']}</td><td style='background-color: #E0FFCC;'>{variant['location']}</td><td style='background-color: #E0FFCC;'>{variant['change']}</td></tr>"
                                 else:
-                                    html_string += f"<td style='background-color: #FFD6C9;'>{variant['name']}</td><td>{variant['exon']}</td><td>{variant['location']}</td><td>{variant['change']}</td></tr>"
+                                    html_string += f"<td style='background-color: #FFD6C9;'>{variant['name']}</td><td style='background-color: #FFD6C9;'>{variant['exon']}</td><td style='background-color: #FFD6C9;'>{variant['location']}</td><td style='background-color: #FFD6C9;'>{variant['change']}</td></tr>"
                             else:
-                                html_string += f"<td style='background-color: #EFECE6;'>{variant['name']}</td><td>{variant['exon']}</td><td>{variant['location']}</td><td>{variant['change']}</td></tr>"
-
+                                html_string += f"<td style='background-color: #EFECE6;'>{variant['name']}</td><td style='background-color: #EFECE6;'>{variant['exon']}</td><td style='background-color: #EFECE6;'>{variant['location']}</td><td style='background-color: #EFECE6;'>{variant['change']}</td></tr>"
 
                 html_string += "</table>"
                 st.markdown(html_string, unsafe_allow_html=True)
 
             if unknown_alleles_to_display:
                 st.write("### Unknown ABO Alleles:")
-              
-                 
 
                 unknown_alleles_df = pd.DataFrame(unknown_alleles_to_display)
                 st.dataframe(unknown_alleles_df, hide_index=True)

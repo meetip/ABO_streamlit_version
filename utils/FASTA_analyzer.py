@@ -10,7 +10,7 @@ import utils.referece_loader as rl
 
  
 GLOBAL = 1000
-DEBUG = True
+DEBUG = False
 
 try:
     from Bio.Align import PairwiseAligner
@@ -139,60 +139,63 @@ class FASTAAlignmentService:
             aligner.extend_gap_score = self.local_alignment_params['gap_extend_penalty']
 
         # Perform local alignment
-        alignments = aligner.align(query_sequence, exon_sequence)
+        if len(query_sequence) > len(exon_sequence)*80/100:  # At least 80% length
+            alignments = aligner.align(query_sequence, exon_sequence)
 
-        # Check if there are too many alignments (indicating poor match)
-        try:
-            alignment_count = len(alignments)
-            if alignment_count == 0:
-                return {'error': 'No significant alignment found'}
-        except OverflowError:
-            # Too many optimal alignments indicates sequences are very different
-            # Get the best alignment
-            return {'error': 'Sequences too divergent - too many possible alignments'}
-        best_alignment = alignments[0]
-        score = best_alignment.score  # type: ignore
+            # Check if there are too many alignments (indicating poor match)
+            try:
+                alignment_count = len(alignments)
+                if alignment_count == 0:
+                    return {'error': 'No significant alignment found'}
+            except OverflowError:
+                # Too many optimal alignments indicates sequences are very different
+                # Get the best alignment
+                return {'error': 'Sequences too divergent - too many possible alignments'}
+            best_alignment = alignments[0]
+            score = best_alignment.score  # type: ignore
 
-        # Extract aligned sequences with gaps from the alignment object
-        aligned_ref, aligned_query = self._extract_aligned_sequences(
-            best_alignment)
+            # Extract aligned sequences with gaps from the alignment object
+            aligned_ref, aligned_query = self._extract_aligned_sequences(
+                best_alignment)
 
-        # Calculate alignment statistics
-        alignment_length = len(aligned_query)
-        matches = sum(1 for q, r in zip(aligned_query, aligned_ref)
-                      if q == r and q != '-' and r != '-')
-        similarity = matches / alignment_length if alignment_length > 0 else 0
+            # Calculate alignment statistics
+            alignment_length = len(aligned_query)
+            matches = sum(1 for q, r in zip(aligned_query, aligned_ref)
+                        if q == r and q != '-' and r != '-')
+            similarity = matches / alignment_length if alignment_length > 0 else 0
 
-        # Get alignment coordinates
-        query_start = best_alignment.coordinates[1][0]  # type: ignore
-        query_end = best_alignment.coordinates[1][-1]  # type: ignore
-        ref_start = best_alignment.coordinates[0][0]  # type: ignore
-        ref_end = best_alignment.coordinates[0][-1]  # type: ignore
+            # Get alignment coordinates
+            query_start = best_alignment.coordinates[1][0]  # type: ignore
+            query_end = best_alignment.coordinates[1][-1]  # type: ignore
+            ref_start = best_alignment.coordinates[0][0]  # type: ignore
+            ref_end = best_alignment.coordinates[0][-1]  # type: ignore
 
-        # Parse variants from the alignment
-        variants = self._extract_variants_from_alignment(
-            aligned_query, aligned_ref, query_start, ref_start, exon_data
-        )
+            # Parse variants from the alignment
+            variants = self._extract_variants_from_alignment(
+                aligned_query, aligned_ref, query_start, ref_start, exon_data
+            )
 
-        return {
-            'exon_number': exon_number,
-            'alignment_score': score,
-            'similarity': similarity,
-            'alignment_length': alignment_length,
-            'matches': matches,
-            'query_start': query_start,
-            'query_end': query_end,
-            'ref_start': ref_start,
-            'ref_end': ref_end,
-            'aligned_query': aligned_query,
-            'aligned_reference': aligned_ref,
-            'variants': variants,
-            'exon_info': {
-                'genomic_start': exon_data['start'],
-                'genomic_end': exon_data['end'],
-                'length': len(exon_sequence)
+            return {
+                'exon_number': exon_number,
+                'alignment_score': score,
+                'similarity': similarity,
+                'alignment_length': alignment_length,
+                'matches': matches,
+                'query_start': query_start,
+                'query_end': query_end,
+                'ref_start': ref_start,
+                'ref_end': ref_end,
+                'aligned_query': aligned_query,
+                'aligned_reference': aligned_ref,
+                'variants': variants,
+                'exon_info': {
+                    'genomic_start': exon_data['start'],
+                    'genomic_end': exon_data['end'],
+                    'length': len(exon_sequence)
+                }
             }
-        }
+        else:
+            return {'error': 'Query sequence shorter than exon sequence'}
 
     def _extract_variants_from_alignment(self, aligned_query: str, aligned_ref: str,
                                          query_start: int, ref_start: int, exon_data: Dict) -> List[Dict]:
@@ -364,10 +367,10 @@ class FASTAAlignmentService:
                   f"Variants: {len(variants)}")
 
         # Calculate overall statistics
-        results['total_variants'] = len(all_variants)
-        results['all_variants'] = all_variants
-        results['overall_similarity'] = total_score / \
-            total_length if total_length > 0 else 0
+        #results['total_variants'] = len(all_variants)
+        #results['all_variants'] = all_variants
+        #results['overall_similarity'] = total_score / \
+        #    total_length if total_length > 0 else 0
         if DEBUG:
             
             print(f"\n=== ALIGNMENT SUMMARY ===")
@@ -376,8 +379,11 @@ class FASTAAlignmentService:
             print(f"  Insertions: {results['variant_summary']['insertions']}")
             print(f"  Deletions: {results['variant_summary']['deletions']}")
             print(f"Overall similarity: {results['overall_similarity']:.3f}")
-
-        return results
+       
+        if results['exon_alignments']!=[]:
+            return results
+        else:
+            return {'error': 'No exons were successfully aligned'}
 
     def create_coordinate_mapping_from_alignment(self, alignment_results: Dict) -> Dict:
         """
