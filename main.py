@@ -494,7 +494,8 @@ def process_fasta_file(fasta_file, exon_start=0, exon_end=0):
 
 
 def handle_IUPAC_codes(abo_identifier, i, types):
-    types_list = {'snp': 'alt_base', 'insertion': 'inserted_sequence',
+    print(i)
+    types_list = {'SNP': 'alt_base', 'insertion': 'inserted_sequence',
                   'deletion': 'deleted_sequence'}
     het_variants = []
     var_nodes = []
@@ -503,7 +504,7 @@ def handle_IUPAC_codes(abo_identifier, i, types):
     possible_bases = IUPAC_CODES.get(variant_base, "").split(" or ")
     print(i['isbt_pos'], possible_bases)
     for base in possible_bases:
-
+        field = types_list[i['type']]
         var_node = None
         if i['type'] == 'deletion':
             var_node = abo_identifier.get_variant_node(
@@ -518,7 +519,7 @@ def handle_IUPAC_codes(abo_identifier, i, types):
         if var_node is not None:
             print(var_node)
             var_nodes.append(var_node)
-            het_variants.append(i['alt_base'])
+            het_variants.append(i[field])
         else:
             if base != i['ref_base']:
 
@@ -553,12 +554,13 @@ def identify_abo_alleles(FASTA_variant_list):
                     abo_identifier, i, 'deletion')
             else:
                 var_node, het_var, unk = handle_IUPAC_codes(
-                    abo_identifier, i, 'snp')
+                    abo_identifier, i, 'SNP')
             var_nodes.extend(var_node)
             het_variants.extend(het_var)
             unknown.extend(unk)
     alleles = []
     node_iupac_map = {node[0]: node[2] for node in var_nodes}
+    print(node_iupac_map)
     for node_name, node_data, iupac_code in var_nodes:
         # The identify_alleles method expects a list of tuples (node_name, node_data)
         # So we pass the current node as a list containing one tuple
@@ -627,7 +629,7 @@ def get_display_iupac_change(change, iupac_code):
         ref_base = change_list[0]
         return f"{ref_base}>{iupac_code}"
     else:
-        change = change[:-2] + f"({iupac_code})"
+        change = change[:-1] + f"({iupac_code})"
         return change
 
 
@@ -857,13 +859,19 @@ if analyze_button:
                 for allele_data in possible_alleles:
                     for allele_name, variants in allele_data.items():
                         num_variants = len(variants)
-                        html_string += f"<tr><td rowspan='{num_variants}'>{allele_name}</td>"
+                        html_string += f"<tr style='border-top: 3px solid #999;'><td rowspan='{num_variants}'>{allele_name}</td>"
                         for i, variant in enumerate(variants):
+                            hets= False
+                            if variant['name'] in node_iupac_map: 
+                                iupac_code = node_iupac_map[variant['name']]
+                                if iupac_code not in ['A', 'T', 'C', 'G']:
+                                    hets = True
+
                             if i > 0:
                                 html_string += "<tr>"
                             if variant['exon'] in tested_exons:
                                 if variant['name'] in variants_name and variant['exon'] in tested_exons:
-                                    if variant['name'] in node_iupac_map:
+                                    if hets:
                                         iupac_code = node_iupac_map[variant['name']]
                                         html_string += f"<td style='background-color: #FEC98F;'>{variant['name']} ({iupac_code})</td><td style='background-color: #FEC98F;'>{variant['exon']}</td><td style='background-color: #FEC98F;'>{variant['location']}</td><td style='background-color: #FEC98F;'>{get_display_iupac_change(variant['change'], iupac_code)}</td></tr>"
                                     else:
