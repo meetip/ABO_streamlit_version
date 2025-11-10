@@ -664,18 +664,150 @@ def get_cds(exon_number):
 st.title("Genetic Analysis Dashboard")
 st.set_page_config(layout="wide")
 
+# Tabs for displaying results
+tab1, tab2, tab3, tab4 = st.tabs([
+    "Chromatogram Check for Heterozygotes",
+    "Exon-based SNP",
+    "Allele Prediction",
+    "Teams & References"
+])
+
+with tab4:
+    st.markdown("### 📚 References")
+    st.markdown("""
+    S. Prananpaeng, T. Thaiyanto, R. Wita and N. Anukul, 
+    "Whole-Exome Sequencing (WES) Analysis for ABO Subgroups Identification," 
+    *2023 20th International Joint Conference on Computer Science and Software Engineering (JCSSE)*, 
+    2023, pp. 264-269, url: [https://ieeexplore.ieee.org/document/10202117/](https://ieeexplore.ieee.org/document/10202117/).
+    """)    
+    st.markdown("""
+    R. Wita, S. Somhom, J. Chawachat, A. Thongratsameethong, N. Anukul and C. Sirikul, 
+    "DNA Sequencing Analysis Framework for ABO Genotyping and ABO Discrepancy Resolution," 
+    *2021 18th International Conference on Electrical Engineering/Electronics, Computer, 
+    Telecommunications and Information Technology (ECTI-CON)*, Chiang Mai, Thailand, 2021, 
+    pp. 913-916, doi: [10.1109/ECTI-CON51831.2021.9454861](https://ieeexplore.ieee.org/document/9454861).
+    """)
+
+    st.subheader("👥 Teams")
+    st.markdown("#### InnoGeHLA Lab")
+    st.markdown("##### Lab members")
+
+    # CSS for circular images
+    st.markdown("""
+        <style>
+        .member-card {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .member-name {
+            font-weight: bold;
+            font-size: 18px;
+            margin-top: 15px;
+            color: #333;
+            text-align: center;
+        }
+        
+        .member-position {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+            line-height: 1.6;
+            text-align: center;
+        }
+        
+        /* Center the image within its container */
+        .element-container:has(div[data-testid="stImage"]) {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        div[data-testid="stImage"] {
+            text-align: center;
+        }
+        
+        /* Remove width fit-content from Streamlit's emotion cache class */
+        .st-emotion-cache-p75nl5 {
+            width: 100% !important;
+        }
+        
+        /* Make Streamlit images circular */
+        div[data-testid="stImage"] img {
+            border-radius: 50%;
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            object-position: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: inline-block;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Create three columns for team members
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown('<div class="member-card">', unsafe_allow_html=True)
+        try:
+            from PIL import Image
+            img = Image.open("utils/img/NP.jpg")
+            st.image(img, width=200)
+        except Exception as e:
+            st.image("https://via.placeholder.com/200", width=200)
+        st.markdown('<div class="member-name">Nampeung Anukul</div>',
+                    unsafe_allow_html=True)
+        st.markdown('''<div class="member-position">
+            Division of
+Blood Transfusion Science,<br>Faculty of Associated Medical Sciences<br>
+            Chiang Mai University<br>
+            nampeung.a@cmu.ac.th
+        </div>''', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col2:
+        st.markdown('<div class="member-card">', unsafe_allow_html=True)
+        try:
+            from PIL import Image
+            img = Image.open("utils/img/CS.jpg")
+            st.image(img, width=200)
+        except Exception as e:
+            st.image("https://via.placeholder.com/200", width=200)
+        st.markdown(
+            '<div class="member-name">Chonthicha Sirikul</div>', unsafe_allow_html=True)
+        st.markdown('''<div class="member-position">
+            Division of
+Blood Transfusion Science,<br> Faculty of Associated Medical Sciences<br>
+            Chiang Mai University<br>
+            chonthicha.sir@cmu.ac.th
+        </div>''', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col3:
+        st.markdown('<div class="member-card">', unsafe_allow_html=True)
+        try:
+            from PIL import Image
+            img = Image.open("utils/img/RW.jpg")
+            st.image(img, width=200)
+        except Exception as e:
+            st.image("https://via.placeholder.com/200", width=200)
+        st.markdown('<div class="member-name">Ratsameetip Wita</div>',
+                    unsafe_allow_html=True)
+        st.markdown('''<div class="member-position">
+            Department of Computer Science,<br> Faculty of Science<br>
+            Chiang Mai University<br>
+            ratsameetip.wit@cmu.ac.th
+        </div>''', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+
 if analyze_button:
     if not fwd_ab1 and not fasta_files:
         st.warning("Please upload at least one file before analyzing.")
     else:
         st.success("Files uploaded successfully! Starting analysis...")
 
-        # Tabs for displaying results
-        tab1, tab2, tab3 = st.tabs([
-            "Chromatogram Check for Heterozygotes",
-            "Exon-based SNP",
-            "Allele Prediction"
-        ])
         if fasta_files:
             exons_ref = []
             processed_FASTA = {}
@@ -855,14 +987,16 @@ if analyze_button:
                 )
                 html_string = "<table>"
                 html_string += "<tr><th>Allele</th><th>Variant Name</th><th>Exon</th><th>Location</th><th>Change</th></tr>"
-
+                print("possible alleles = ", possible_alleles)
+                print("node_iupac_map = ", node_iupac_map)
+                print("tested_exons = ", tested_exons)
                 for allele_data in possible_alleles:
                     for allele_name, variants in allele_data.items():
                         num_variants = len(variants)
                         html_string += f"<tr style='border-top: 3px solid #999;'><td rowspan='{num_variants}'>{allele_name}</td>"
                         for i, variant in enumerate(variants):
-                            hets= False
-                            if variant['name'] in node_iupac_map: 
+                            hets = False
+                            if variant['name'] in node_iupac_map:
                                 iupac_code = node_iupac_map[variant['name']]
                                 if iupac_code not in ['A', 'T', 'C', 'G']:
                                     hets = True
