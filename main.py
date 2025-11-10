@@ -684,7 +684,7 @@ with tab4:
     "Whole-Exome Sequencing (WES) Analysis for ABO Subgroups Identification," 
     *2023 20th International Joint Conference on Computer Science and Software Engineering (JCSSE)*, 
     2023, pp. 264-269, url: [https://ieeexplore.ieee.org/document/10202117/](https://ieeexplore.ieee.org/document/10202117/).
-    """)    
+    """)
     st.markdown("""
     R. Wita, S. Somhom, J. Chawachat, A. Thongratsameethong, N. Anukul and C. Sirikul, 
     "DNA Sequencing Analysis Framework for ABO Genotyping and ABO Discrepancy Resolution," 
@@ -701,6 +701,23 @@ with tab4:
 
     st.subheader("👥 Teams")
     st.markdown("#### InnoGeHLA Lab")
+    st.markdown("""
+The InnoGeHLA (Innovation Genomics HLA) Lab at Chiang Mai University is a collaborative research group 
+                that brings together expertise in genomics, bioinformatics, and transfusion science. 
+                The lab’s mission is to blend molecular biology with computational innovation to enhance 
+                precision medicine and genetic diagnostics, with a special focus on blood group and HLA 
+                genotyping.
+
+The team is led by Asst. Prof. Nampeung Anukul, whose work centers on blood group genetics and transfusion 
+                science, and Miss Chonthicha Sirikul, who specializes in molecular diagnostics and hematology.
+                 Joining them is Asst. Prof. Ratsameetip Wita, a computer scientist from the Faculty of 
+                Science who explores the use of artificial intelligence and bioinformatics to interpret 
+                complex genetic data.
+
+Together, they form a dynamic and interdisciplinary team that bridges the gap between biomedical research 
+                and computational science—working to turn genomic insights into practical tools that 
+                benefit both laboratories and patients.
+                """)
     st.markdown("##### Lab members")
 
     # CSS for circular images
@@ -755,6 +772,8 @@ with tab4:
         }
         </style>
     """, unsafe_allow_html=True)
+
+    
 
     # Create three columns for team members
     col1, col2, col3 = st.columns(3)
@@ -811,7 +830,18 @@ Blood Transfusion Science,<br> Faculty of Associated Medical Sciences<br>
             ratsameetip.wit@cmu.ac.th
         </div>''', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
+    # Student members table - read from CSV file
 
+    st.markdown("##### Student Contributors")
+    import pandas as pd
+    try:
+        student_data = pd.read_csv("utils/data/students.csv")
+        st.dataframe(student_data, hide_index=True)
+    except FileNotFoundError:
+        st.warning(
+            "Student data file not found. Please add utils/data/students.csv")
+    except Exception as e:
+        st.error(f"Error loading student data: {e}")
 
 if analyze_button:
     if not fwd_ab1 and not fasta_files:
