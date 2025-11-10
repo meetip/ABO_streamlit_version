@@ -675,6 +675,11 @@ tab1, tab2, tab3, tab4 = st.tabs([
 with tab4:
     st.markdown("### 📚 References")
     st.markdown("""
+            Sirikul C, Wita R, Anukul N.,
+                "Assessment of a New ABO Blood Group Genotyping Online Platform."
+                , J Hemato Transfus Med. Vol. 35  Supplement 2025. ISSN 2985-2404 (online).")
+    """)
+    st.markdown("""
     S. Prananpaeng, T. Thaiyanto, R. Wita and N. Anukul, 
     "Whole-Exome Sequencing (WES) Analysis for ABO Subgroups Identification," 
     *2023 20th International Joint Conference on Computer Science and Software Engineering (JCSSE)*, 
@@ -687,6 +692,12 @@ with tab4:
     Telecommunications and Information Technology (ECTI-CON)*, Chiang Mai, Thailand, 2021, 
     pp. 913-916, doi: [10.1109/ECTI-CON51831.2021.9454861](https://ieeexplore.ieee.org/document/9454861).
     """)
+    st.markdown("""
+            Anukul N, Wita R, Leetrakool N, Sirikul C, Veeraphan N, Wongchai S. 
+             "Two novel alleles on Fucosyltransferase 2 from northern Thai paraBombay 
+             family and computational prediction on mutation effect."
+              Transfusion. 2021;1–11. [https://doi.org/10.1111/trf.16646](https://doi.org/10.1111/trf.16646)
+             """)
 
     st.subheader("👥 Teams")
     st.markdown("#### InnoGeHLA Lab")
