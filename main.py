@@ -702,15 +702,15 @@ with tab4:
     st.subheader("👥 Teams")
     st.markdown("#### InnoGeHLA Lab")
     st.markdown("""
-The InnoGeHLA (Innovation Genomics HLA) Lab at Chiang Mai University is a collaborative research group 
+The InnoGeHLA (**Inno**vation **Ge**nomics **HLA**) Lab at Chiang Mai University is a collaborative research group 
                 that brings together expertise in genomics, bioinformatics, and transfusion science. 
                 The lab’s mission is to blend molecular biology with computational innovation to enhance 
                 precision medicine and genetic diagnostics, with a special focus on blood group and HLA 
                 genotyping.
 
-The team is led by Asst. Prof. Nampeung Anukul, whose work centers on blood group genetics and transfusion 
-                science, and Miss Chonthicha Sirikul, who specializes in molecular diagnostics and hematology.
-                 Joining them is Asst. Prof. Ratsameetip Wita, a computer scientist from the Faculty of 
+The team is led by **Asst. Prof. Nampeung Anukul**, whose work centers on blood group genetics and transfusion 
+                science, and **Miss Chonthicha Sirikul**, who specializes in molecular diagnostics and hematology.
+                 Joining them is **Asst. Prof. Ratsameetip Wita**, a computer scientist from the Faculty of 
                 Science who explores the use of artificial intelligence and bioinformatics to interpret 
                 complex genetic data.
 
